@@ -10,12 +10,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter',
+      title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo'),
+      home: const MyHomePage(title: 'Flutter Custom App'),
     );
   }
 }
@@ -34,15 +34,16 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   late AnimationController _controller;
   late Animation<double> _animation;
   String _inputText = "";
+  List<String> _history = []; // カウンターの履歴を保持するリスト
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.bounceInOut);
   }
 
   void _incrementCounter() {
@@ -52,6 +53,22 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
       if (_counter == 10) {
         _showAchievementDialog();
+      } else if (_counter == 20) {
+        _showCustomMessageDialog("Amazing!", "20回達成！素晴らしい！");
+      }
+
+      // カウンターの履歴に追加
+      _history.add("Incremented to $_counter");
+    });
+  }
+
+  void _decrementCounter() {
+    setState(() {
+      if (_counter > 0) {
+        _counter--;
+        _history.add("Decremented to $_counter");
+      } else {
+        _showWarningDialog("警告", "カウントは0未満にできません！");
       }
     });
   }
@@ -59,10 +76,32 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   void _resetCounter() {
     setState(() {
       _counter = 0;
+      _history.add("Reset to $_counter");
     });
   }
 
+  // カウントが0以下になった時の警告ダイアログ
+  void _showWarningDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  // 成績達成のダイアログ
   void _showAchievementDialog() {
     showDialog(
       context: context,
@@ -83,20 +122,47 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     );
   }
 
+  // カスタムメッセージダイアログ
+  void _showCustomMessageDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // カウント数に応じて背景色を変更
   Color _getBackgroundColor() {
     if (_counter >= 20) {
-      return Colors.green;
+      return Colors.greenAccent;
     } else if (_counter >= 10) {
-      return Colors.blueAccent;
+      return Colors.lightBlueAccent;
     } else {
       return Colors.deepPurpleAccent;
     }
   }
 
-  // カウント数に応じて表示するメッセージ
+  // カウント数に応じたメッセージ
   String _getMessage() {
-    return "押して";
+    if (_counter >= 20) {
+      return "20回超え！すごい！";
+    } else if (_counter >= 10) {
+      return "10回達成！あと少し！";
+    } else {
+      return "押して続けて！";
+    }
   }
 
   @override
@@ -111,7 +177,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       appBar: AppBar(
         backgroundColor: Colors.deepPurple,
         title: Text(
-          'aaa',
+          'カスタマイズされたカウンター',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             letterSpacing: 2.0,
@@ -119,9 +185,9 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
         ),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.search),
+            icon: const Icon(Icons.settings),
             onPressed: () {
-              print('Search icon tapped');
+              print('Settings tapped');
             },
           ),
         ],
@@ -130,17 +196,18 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
         children: [
           // 赤い背景のコンテナとテキスト
           Container(
-            color: Colors.red,
+            color: Colors.redAccent,
             padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text('コンテナの中身だよ'),
-                Text('どうも、弟です。'),
+              children: [
+                const Text('コンテナの中身だよ', style: TextStyle(color: Colors.white)),
+                Text('入力されたコメント: $_inputText', style: const TextStyle(color: Colors.white)),
               ],
             ),
           ),
 
+          // カウントアニメーションと背景変更
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 500),
@@ -158,7 +225,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                     Text(
                       _getMessage(),
                       style: const TextStyle(
-                        fontSize: 26,
+                        fontSize: 28,
                         color: Colors.white70,
                         fontWeight: FontWeight.w600,
                       ),
@@ -168,19 +235,20 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                       child: Text(
                         '$_counter',
                         style: const TextStyle(
-                          fontSize: 60,
+                          fontSize: 50,
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
 
+                    // テキストボックスを追加
                     Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(8.0),
                       child: TextField(
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
-                          labelText: 'コメント入力して',
+                          labelText: 'コメント入力',
                         ),
                         onChanged: (text) {
                           setState(() {
@@ -195,7 +263,19 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                       'テキスト: $_inputText',
                       style: const TextStyle(
                         fontSize: 20,
-                        color: Colors.white70,
+                        color: Colors.black,
+                      ),
+                    ),
+
+                    // カウンターの履歴を表示
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: _history.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(_history[index], style: const TextStyle(color: Colors.white)),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -217,11 +297,18 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
             ),
             child: const Icon(Icons.add),
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 10),
+          FloatingActionButton(
+            onPressed: _decrementCounter,
+            tooltip: 'Decrement',
+            backgroundColor: Colors.blueAccent,
+            child: const Icon(Icons.remove),
+          ),
+          const SizedBox(height: 10),
           FloatingActionButton(
             onPressed: _resetCounter,
             tooltip: 'Reset',
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.redAccent,
             child: const Icon(Icons.refresh),
           ),
         ],
